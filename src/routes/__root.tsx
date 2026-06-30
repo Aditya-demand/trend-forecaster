@@ -123,10 +123,10 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    let active = false;
+    let cleanup = () => {};
+    let unmounted = false;
     import("../integrations/supabase/client").then(({ supabase }) => {
-      if (active) return;
-      active = true;
+      if (unmounted) return;
       const { data } = supabase.auth.onAuthStateChange((event) => {
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
         router.invalidate();
@@ -134,8 +134,10 @@ function RootComponent() {
       });
       cleanup = () => data.subscription.unsubscribe();
     });
-    let cleanup = () => {};
-    return () => cleanup();
+    return () => {
+      unmounted = true;
+      cleanup();
+    };
   }, [queryClient, router]);
 
   return (
